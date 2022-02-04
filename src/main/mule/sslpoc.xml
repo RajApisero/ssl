@@ -1,0 +1,45 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<mule xmlns:tls="http://www.mulesoft.org/schema/mule/tls" xmlns:ee="http://www.mulesoft.org/schema/mule/ee/core"
+	xmlns:http="http://www.mulesoft.org/schema/mule/http"
+	xmlns="http://www.mulesoft.org/schema/mule/core" xmlns:doc="http://www.mulesoft.org/schema/mule/documentation" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd
+http://www.mulesoft.org/schema/mule/http http://www.mulesoft.org/schema/mule/http/current/mule-http.xsd
+http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/ee/core/current/mule-ee.xsd
+http://www.mulesoft.org/schema/mule/tls http://www.mulesoft.org/schema/mule/tls/current/mule-tls.xsd">
+	<http:listener-config name="HTTPS_Listener_config" doc:name="HTTP Listener config" doc:id="b26311d0-215d-4d10-a18b-84aa39edf6f6" >
+		<http:listener-connection protocol="HTTPS" host="0.0.0.0" port="8082" >
+			<tls:context >
+				<tls:trust-store path="certs/server-truststore.jks" password="12345678" type="jks" />
+				<tls:key-store type="jks" path="certs/server-keystore.jks" alias="mule-server" keyPassword="12345678" password="12345678" />
+			</tls:context>
+		</http:listener-connection>
+	</http:listener-config>
+	<http:listener-config name="HTTP_Listener_config" doc:name="HTTP Listener config" doc:id="d687737e-068b-414f-9775-58b15b4777d1" >
+		<http:listener-connection host="0.0.0.0" port="8081" />
+	</http:listener-config>
+	<http:request-config name="HTTPS_Request_configuration" doc:name="HTTP Request configuration" doc:id="29c165d0-d290-489a-b3e5-37b0c0fd129a" >
+		<http:request-connection protocol="HTTPS" host="localhost" port="8082" >
+			<tls:context >
+				<tls:trust-store insecure="true" path="certs/client-truststore.jks" password="12345678" type="jks"/>
+				<tls:key-store type="jks" path="certs/client-keystore.jks" alias="mule-client" keyPassword="12345678" password="12345678" />
+			</tls:context>
+		</http:request-connection>
+	</http:request-config>
+	<flow name="sslpocFlow" doc:id="93a2b0ec-711b-44e9-892d-794554b3b4f2" >
+		<http:listener doc:name="Listener" doc:id="4a2d7596-925e-4470-9bea-4fa7e952c192" config-ref="HTTPS_Listener_config" path="/ssl"/>
+		<ee:transform doc:name="Transform Message" doc:id="0f3febeb-d787-49e7-b000-689ed78b83f4" >
+			<ee:message >
+				<ee:set-payload ><![CDATA[%dw 2.0
+output application/json
+---
+{
+	"message": "success"
+}]]></ee:set-payload>
+			</ee:message>
+		</ee:transform>
+	</flow>
+	<flow name="sslpocFlow1" doc:id="b96e4e60-b733-4ebb-b80b-ff535005fa3b" >
+		<http:listener doc:name="Listener" doc:id="0964f538-5ee2-4630-b65d-85ca81fef0e2" config-ref="HTTP_Listener_config" path="/nonsecure"/>
+		<http:request method="GET" doc:name="Request" doc:id="74563e05-ddbf-4ead-a387-0c7e1cead2e2" config-ref="HTTPS_Request_configuration" path="/ssl"/>
+	</flow>
+</mule>
